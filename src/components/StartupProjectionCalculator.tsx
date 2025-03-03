@@ -43,6 +43,7 @@ const StartupProjectionCalculator: React.FC = () => {
   const [summaryMetrics, setSummaryMetrics] = useState<YearlyData[]>([]);
   const [savedScenarios, setSavedScenarios] = useState<{[key: string]: Inputs}>({});
   const [showSavedScenarios, setShowSavedScenarios] = useState(false);
+  const [showLinkOptions, setShowLinkOptions] = useState(false);
   const [periodType, setPeriodType] = useState<string>('annual');
 
   const colors = {
@@ -171,12 +172,28 @@ const StartupProjectionCalculator: React.FC = () => {
 
 
   // Get shareable link
-  const getShareableLink = () => {
+  const getShareableLink = async (shorten: boolean = true) => {
     const scenarioStr = btoa(JSON.stringify(inputs));
     if (typeof window !== 'undefined') {
       const url = new URL(window.location.href);
       url.searchParams.set('scenario', scenarioStr);
-      return url.toString();
+      let longURL = url.toString();
+
+      if (shorten) {
+        try {
+          const apiURL = `https://tinyurl.com/api-create.php?url=${encodeURIComponent(longURL)}`;
+          const response = await fetch(apiURL);
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          const shortURL = await response.text();
+          return shortURL;
+        } catch (error) {
+          console.error("Could not shorten URL:", error);
+          return longURL;
+        }
+      }
+      return longURL;
     }
     return '';
   };
@@ -227,16 +244,41 @@ const StartupProjectionCalculator: React.FC = () => {
                 Reset to Defaults
               </button>
 
-              <button
-                onClick={() => {
-                  const link = getShareableLink();
-                  navigator.clipboard.writeText(link);
-                  alert('Shareable link copied to clipboard!');
-                }}
-                className="bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700"
-              >
-                Copy Link
-              </button>
+              {/* Dropdown Menu */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowLinkOptions(!showLinkOptions)}
+                  className="bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700"
+                >
+                  Copy Link <span className="ml-1">&#9662;</span>
+                </button>
+                {showLinkOptions && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white border rounded-lg shadow-xl z-10">
+                    <button
+                      onClick={async () => {
+                        const link = await getShareableLink(true);
+                        navigator.clipboard.writeText(link);
+                        alert('Shortened link copied to clipboard!');
+                        setShowLinkOptions(false);
+                      }}
+                      className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                    >
+                      Copy Shortened Link
+                    </button>
+                    <button
+                      onClick={async () => {
+                        const link = await getShareableLink(false);
+                        navigator.clipboard.writeText(link);
+                        alert('Original link copied to clipboard!');
+                        setShowLinkOptions(false);
+                      }}
+                      className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                    >
+                      Copy Original Link
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -358,7 +400,7 @@ const StartupProjectionCalculator: React.FC = () => {
                       <div className="font-medium">Investment Metrics:</div>
                       <div className="flex justify-between mt-1">
                         <span>Customer LTV: ${(inputs.monthlyRevenuePerClient * (inputs.netMarginPercentage / 100) * (12 / (inputs.churnRate / 100))).toFixed(0)}</span>
-                        <span>LTV:CAC Ratio: {(inputs.monthlyRevenuePerClient * (inputs.netMarginPercentage / 100) * (12 / (inputs.churnRate / 100)) / inputs.cac).toFixed(1)}x</span>
+                        <span>LTV:CAC Ratio: ${(inputs.monthlyRevenuePerClient * (inputs.netMarginPercentage / 100) * (12 / (inputs.churnRate / 100)) / inputs.cac).toFixed(1)}x</span>
                         <span>CAC Payback: {Math.round(inputs.cac / (inputs.monthlyRevenuePerClient * (inputs.netMarginPercentage / 100)))} months</span>
                       </div>
                     </div>
