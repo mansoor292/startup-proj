@@ -9,6 +9,8 @@ interface Inputs {
   seedMarketingBudget: number;
   seedMarketingMonths: number;
   scenarioName: string;
+  fixedCosts?: number;
+  initialCash?: number;
 }
 
 export default Inputs;

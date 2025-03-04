@@ -8,6 +8,7 @@ interface YearlyData {
   customerLTV: number;
   ltvToCacRatio: number;
   cacPaybackMonths: number;
+  cash: number;
 }
 
 export default YearlyData;

@@ -13,6 +13,10 @@ interface MonthlyData {
   seedBudgetRemaining: number;
   customerLTV: number;
   ltvToCacRatio: number;
+  burnMultiple?: number;
+  cash?: number;
+  runway?: number;
+  monthlyBurn?: number;
 }
 
 export default MonthlyData;

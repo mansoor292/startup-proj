@@ -35,6 +35,7 @@ const Calculator: React.FC<CalculatorProps> = ({ inputs, setProjectionData, setS
     let cumulativeNewClientsInPipeline = new Array(salesCycleLengthMonths).fill(0);
     let cumulativeRevenue = 0;
     let cumulativeProfit = 0;
+    let cash = inputs.initialCash ?? 0;
 
     // Calculate monthly projections
     for (let month = 0; month < months; month++) {
@@ -84,6 +85,26 @@ const Calculator: React.FC<CalculatorProps> = ({ inputs, setProjectionData, setS
       // Calculate net profit
       const netProfit = monthlyProfit - monthlyMarketingBudget;
 
+      // Calculate total costs
+      const totalCosts = (inputs.fixedCosts || 0) + monthlyMarketingBudget + (inputs.cac * newClientsThisMonth);
+
+      // Calculate cash balance
+      cash += monthlyRevenue - totalCosts;
+
+      // Calculate runway
+      const runway = cash > 0 && totalCosts > monthlyRevenue ? Math.floor(cash / (totalCosts - monthlyRevenue)) : (cash > 0 ? Infinity : 0);
+      const monthlyBurn = totalCosts - monthlyRevenue;
+
+      // Calculate net new ARR (Annual Recurring Revenue)
+      const netNewARR = month > 3 ?
+        (monthlyRevenue - data[month - 4].revenue) * 12 / 3 :
+        monthlyRevenue * 12;
+
+      // Calculate burn multiple
+      const burnMultiple = netNewARR > 0 ?
+        (totalCosts - monthlyRevenue) / (netNewARR / 12) :
+        Infinity;
+
       // Prepare data for this month
       const year = Math.floor(month / 12) + 1;
       const monthOfYear = (month % 12) + 1;
@@ -103,10 +124,15 @@ const Calculator: React.FC<CalculatorProps> = ({ inputs, setProjectionData, setS
         seedBudgetRemaining: month < seedMarketingMonths ?
           seedMarketingBudget - (month + 1) * monthlySeedBudget : 0,
         customerLTV: Math.round(customerLTV),
-        ltvToCacRatio: Math.round(ltvToCacRatio * 10) / 10
+        ltvToCacRatio: Math.round(ltvToCacRatio * 10) / 10,
+        burnMultiple: burnMultiple < 0 ? 0 : burnMultiple, // Ensure burnMultiple is not negative
+        cash,
+        runway,
+        monthlyBurn
       });
     }
 
+    console.log("projectionData before setProjectionData", data);
     setProjectionData(data);
 
     // Calculate summary metrics for the end of each year
@@ -129,7 +155,8 @@ const Calculator: React.FC<CalculatorProps> = ({ inputs, setProjectionData, setS
         annualNetProfit,
         customerLTV: data[yearEndMonth].customerLTV,
         ltvToCacRatio: data[yearEndMonth].ltvToCacRatio,
-        cacPaybackMonths: Math.round(cac / (monthlyRevenuePerClient * (netMarginPercentage / 100)))
+        cacPaybackMonths: Math.round(cac / (monthlyRevenuePerClient * (netMarginPercentage / 100))),
+        cash: data[yearEndMonth].cash ?? 0
       });
     }
 
