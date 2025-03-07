@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Startup Projection API Showcase</title>
+    <!-- Include Tailwind CSS from CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Include Chart.js from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-center mb-8 text-gray-800">Startup Projection API Showcase</h1>
+        
+        <!-- Chart Container -->
+        <div class="bg-white p-6 rounded-lg shadow-lg mb-8">
+            <h2 class="text-xl font-semibold mb-4 text-gray-700">Monthly Revenue & Profit Projection</h2>
+            <div class="h-96">
+                <canvas id="projectionChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Metrics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            
+        </div>
+
+        <!-- Scenario Editor Card -->
+        <div class="bg-white p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold mb-4 text-gray-700">Edit Scenario Parameters</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Initial Clients</label>
+                    <input id="initialClients" type="number" value="100" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Monthly Revenue/Client</label>
+                    <input id="monthlyRevenuePerClient" type="number" value="2000" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">CAC (Cost to Acquire)</label>
+                    <input id="cac" type="number" value="10000" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Annual Churn Rate (%)</label>
+                    <input id="churnRate" type="number" value="5.5" min="0" step="0.1" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Gross Margin (%)</label>
+                    <input id="grossMarginPercentage" type="number" value="30" min="1" max="100" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Sales Cycle (Months)</label>
+                    <input id="salesCycleLengthMonths" type="number" value="3" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Fixed Costs</label>
+                    <input id="fixedCosts" type="number" value="20000" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Marketing Reinvestment (%)</label>
+                    <input id="marketingReinvestmentPercentage" type="number" value="50" min="0" max="100" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+            <div class="flex space-x-2">
+                <button id="updateButton" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors">
+                    Update Projections
+                </button>
+                <button id="getEmbedCodeButton" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md transition-colors">
+                    Get Embed Code
+                </button>
+            </div>
+            
+            <!-- Modal for embed code (initially hidden) -->
+            <div id="embedModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+                <div class="bg-white p-6 rounded-lg shadow-xl max-w-4xl w-full max-h-screen overflow-auto">
+                    <h2 class="text-xl font-semibold mb-4 text-gray-700">Embed Code</h2>
+                    <p class="mb-4 text-gray-600">Copy this code and paste it into your website to embed the chart with your current scenario settings.</p>
+                    
+                    <textarea id="embedCodeTextarea" class="w-full h-64 p-2 border border-gray-300 rounded-md font-mono text-sm" readonly></textarea>
+                    
+                    <div class="flex justify-end mt-4 space-x-2">
+                        <button id="copyEmbedCodeButton" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors">
+                            Copy to Clipboard
+                        </button>
+                        <button id="downloadEmbedCodeButton" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md transition-colors">
+                            Download HTML
+                        </button>
+                        <button id="closeModalButton" class="bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-md transition-colors">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // CHART_CONFIG_START - DO NOT MODIFY THIS LINE
+        // This section contains configuration that will be replaced when embedded
+        const API_BASE_URL = "http://localhost:3000/api"; // This will be replaced with absolute URL
+        const ENCODED_SCENARIO = "eyJpbml0aWFsQ2xpZW50cyI6MTAsIm1vbnRobHlSZXZlbnVlUGVyQ2xpZW50IjoxMDAwLCJjYWMiOjMwMDAsImNodXJuUmF0ZSI6MjAsInNhbGVzQ3ljbGVMZW5ndGhNb250aHMiOjMsImdyb3NzTWFyZ2luUGVyY2VudGFnZSI6NzAsIm1hcmtldGluZ1JlaW52ZXN0bWVudFBlcmNlbnRhZ2UiOjgwLCJzZWVkTWFya2V0aW5nQnVkZ2V0IjoyMDAwMDAwLCJzZWVkTWFya2V0aW5nTW9udGhzIjo2LCJzY2VuYXJpb05hbWUiOiJEZWZhdWx0IFNjZW5hcmlvIiwidXNlU0N1cnZlTW9kZWwiOnRydWUsInRvdGFsQWRkcmVzc2FibGVNYXJrZXQiOjEwMDAwMCwiZWFybHlBZG9wdGVyQ2VpbGluZyI6MC4xNiwibWFpbk1hcmtldFJlc2lzdGFuY2UiOjEuNSwiY29tcGV0aXRpdmVSZXNwb25zZVRocmVzaG9sZCI6MTAwMCwiY29tcGV0aXRpdmVSZXNwb25zZUltcGFjdCI6MS40LCJjaGFubmVsU2F0dXJhdGlvblJhdGUiOjAuMDEsImZpeGVkQ29zdHMiOjMwMDAwLCJpbml0aWFsQ2FzaCI6MjAwMDAwfQ=="; // This will be replaced with encoded scenario
+        // CHART_CONFIG_END - DO NOT MODIFY THIS LINE
+        
+        // Initialize chart
+        let projectionChart;
+        
+        // Format currency
+        const formatCurrency = (value) => {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                maximumFractionDigits: 0
+            }).format(value);
+        };
+        
+        // Create chart with data
+        function createChart(data) {
+            const ctx = document.getElementById('projectionChart').getContext('2d');
+            
+            // Extract monthly data
+            const labels = data.monthlyData.slice(0, 60).map(item => item.label);
+            const revenueData = data.monthlyData.slice(0, 60).map(item => item.revenue);
+            const profitData = data.monthlyData.slice(0, 60).map(item => item.profit);
+            const netProfitData = data.monthlyData.slice(0, 60).map(item => item.netProfit);
+            
+            // Calculate totals
+            const totalRevenue = revenueData.reduce((sum, val) => sum + val, 0);
+            const totalProfit = profitData.reduce((sum, val) => sum + val, 0);
+            const lastMonthClients = data.monthlyData[59].clients;
+            
+            // Update summary metrics
+            document.getElementById('totalRevenue').textContent = formatCurrency(totalRevenue);
+            document.getElementById('totalProfit').textContent = formatCurrency(totalProfit);
+            document.getElementById('totalClients').textContent = lastMonthClients.toLocaleString();
+            
+            // Destroy existing chart if it exists
+            if (projectionChart) {
+                projectionChart.destroy();
+            }
+            
+            // Create new chart
+            projectionChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Revenue',
+                            data: revenueData,
+                            borderColor: 'rgb(34, 197, 94)',
+                            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: 'Gross Profit',
+                            data: profitData,
+                            borderColor: 'rgb(59, 130, 246)',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: 'Net Profit',
+                            data: netProfitData,
+                            borderColor: 'rgb(139, 92, 246)',
+                            backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            ticks: {
+                                maxTicksLimit: 12
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + formatCurrency(context.raw);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Fetch data from API and update chart
+        async function fetchData() {
+            try {
+                // FETCH_CALL_START - DO NOT MODIFY THIS LINE
+                // Build scenario object
+                const scenario = {
+                    initialClients: parseInt(document.getElementById('initialClients').value, 10),
+                    monthlyRevenuePerClient: parseInt(document.getElementById('monthlyRevenuePerClient').value, 10),
+                    cac: parseInt(document.getElementById('cac').value, 10),
+                    churnRate: parseFloat(document.getElementById('churnRate').value),
+                    salesCycleLengthMonths: parseInt(document.getElementById('salesCycleLengthMonths').value, 10),
+                    grossMarginPercentage: parseInt(document.getElementById('grossMarginPercentage').value, 10),
+                    marketingReinvestmentPercentage: parseInt(document.getElementById('marketingReinvestmentPercentage').value, 10),
+                    seedMarketingBudget: 2000000,
+                    seedMarketingMonths: 6,
+                    scenarioName: "API Showcase",
+                    useSCurveModel: false,
+                    totalAddressableMarket: 1000000,
+                    fixedCosts: parseInt(document.getElementById('fixedCosts').value, 10)
+                };
+                
+                // Encode scenario
+                const encodedScenario = btoa(JSON.stringify(scenario));
+                
+                // Fetch data from API
+                const response = await fetch(`${API_BASE_URL}?scenario=${encodedScenario}`);
+                // FETCH_CALL_END - DO NOT MODIFY THIS LINE
+                
+                // EMBEDDED_FETCH_START - DO NOT MODIFY THIS LINE
+        // Use the pre-configured scenario with absolute URL
+        const response = await fetch("http://localhost:3000/api?scenario=eyJpbml0aWFsQ2xpZW50cyI6MTAsIm1vbnRobHlSZXZlbnVlUGVyQ2xpZW50IjoxMDAwLCJjYWMiOjMwMDAsImNodXJuUmF0ZSI6MjAsInNhbGVzQ3ljbGVMZW5ndGhNb250aHMiOjMsImdyb3NzTWFyZ2luUGVyY2VudGFnZSI6NzAsIm1hcmtldGluZ1JlaW52ZXN0bWVudFBlcmNlbnRhZ2UiOjgwLCJzZWVkTWFya2V0aW5nQnVkZ2V0IjoyMDAwMDAwLCJzZWVkTWFya2V0aW5nTW9udGhzIjo2LCJzY2VuYXJpb05hbWUiOiJEZWZhdWx0IFNjZW5hcmlvIiwidXNlU0N1cnZlTW9kZWwiOnRydWUsInRvdGFsQWRkcmVzc2FibGVNYXJrZXQiOjEwMDAwMCwiZWFybHlBZG9wdGVyQ2VpbGluZyI6MC4xNiwibWFpbk1hcmtldFJlc2lzdGFuY2UiOjEuNSwiY29tcGV0aXRpdmVSZXNwb25zZVRocmVzaG9sZCI6MTAwMCwiY29tcGV0aXRpdmVSZXNwb25zZUltcGFjdCI6MS40LCJjaGFubmVsU2F0dXJhdGlvblJhdGUiOjAuMDEsImZpeGVkQ29zdHMiOjMwMDAwLCJpbml0aWFsQ2FzaCI6MjAwMDAwfQ==");
+        // EMBEDDED_FETCH_END - DO NOT MODIFY THIS LINE
+                
+                if (!response.ok) {
+                    throw new Error('Failed to fetch data');
+                }
+                
+                const data = await response.json();
+                createChart(data);
+                
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                alert('Failed to fetch projection data. Please try again.');
+            }
+        }
+        
+        // Function to generate embed code
+        function generateEmbedCode() {
+            // Build scenario object from current form values
+            const scenario = {
+                initialClients: parseInt(document.getElementById('initialClients').value, 10),
+                monthlyRevenuePerClient: parseInt(document.getElementById('monthlyRevenuePerClient').value, 10),
+                cac: parseInt(document.getElementById('cac').value, 10),
+                churnRate: parseFloat(document.getElementById('churnRate').value),
+                salesCycleLengthMonths: parseInt(document.getElementById('salesCycleLengthMonths').value, 10),
+                grossMarginPercentage: parseInt(document.getElementById('grossMarginPercentage').value, 10),
+                marketingReinvestmentPercentage: parseInt(document.getElementById('marketingReinvestmentPercentage').value, 10),
+                seedMarketingBudget: 2000000,
+                seedMarketingMonths: 6,
+                scenarioName: "API Showcase",
+                useSCurveModel: false,
+                totalAddressableMarket: 1000000,
+                fixedCosts: parseInt(document.getElementById('fixedCosts').value, 10)
+            };
+            
+            // Encode scenario
+            const encodedScenario = btoa(JSON.stringify(scenario));
+            
+            // Get the current origin or use a production URL
+            const origin = window.location.origin; // or hardcode production URL
+            
+            // Create the absolute API URL with encoded scenario
+            const apiUrl = `${origin}/api?scenario=${encodedScenario}`;
+            
+            // Generate HTML by modifying a template of the current page
+            const embedHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Startup Projection Chart</title>
+    <script src="https://cdn.tailwindcss.com"><\/script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-center mb-8 text-gray-800">Startup Projection Chart</h1>
+        
+        <!-- Chart Container -->
+        <div class="bg-white p-6 rounded-lg shadow-lg mb-8">
+            <h2 class="text-xl font-semibold mb-4 text-gray-700">Monthly Revenue & Profit Projection</h2>
+            <div class="h-96">
+                <canvas id="projectionChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Metrics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                <h3 class="text-lg font-semibold mb-2 text-gray-700">Total Revenue (5 Years)</h3>
+                <p id="totalRevenue" class="text-2xl font-bold text-green-600">$0</p>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                <h3 class="text-lg font-semibold mb-2 text-gray-700">Total Profit (5 Years)</h3>
+                <p id="totalProfit" class="text-2xl font-bold text-blue-600">$0</p>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                <h3 class="text-lg font-semibold mb-2 text-gray-700">Total Clients (Year 5)</h3>
+                <p id="totalClients" class="text-2xl font-bold text-purple-600">0</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // CHART_CONFIG_START - DO NOT MODIFY THIS LINE
+        // This section contains configuration that will be replaced when embedded
+        const API_BASE_URL = "${origin}/api"; // This will be replaced with absolute URL
+        const ENCODED_SCENARIO = "${encodedScenario}"; // This will be replaced with encoded scenario
+        // CHART_CONFIG_END - DO NOT MODIFY THIS LINE
+        
+        // Initialize chart
+        let projectionChart;
+        
+        // Format currency
+        const formatCurrency = (value) => {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                maximumFractionDigits: 0
+            }).format(value);
+        };
+        
+        // Create chart with data
+        function createChart(data) {
+            const ctx = document.getElementById('projectionChart').getContext('2d');
+            
+            // Extract monthly data
+            const labels = data.monthlyData.slice(0, 60).map(item => item.label);
+            const revenueData = data.monthlyData.slice(0, 60).map(item => item.revenue);
+            const profitData = data.monthlyData.slice(0, 60).map(item => item.profit);
+            const netProfitData = data.monthlyData.slice(0, 60).map(item => item.netProfit);
+            
+            // Calculate totals
+            const totalRevenue = revenueData.reduce((sum, val) => sum + val, 0);
+            const totalProfit = profitData.reduce((sum, val) => sum + val, 0);
+            const lastMonthClients = data.monthlyData[59].clients;
+            
+            // Update summary metrics
+            document.getElementById('totalRevenue').textContent = formatCurrency(totalRevenue);
+            document.getElementById('totalProfit').textContent = formatCurrency(totalProfit);
+            document.getElementById('totalClients').textContent = lastMonthClients.toLocaleString();
+            
+            // Destroy existing chart if it exists
+            if (projectionChart) {
+                projectionChart.destroy();
+            }
+            
+            // Create new chart
+            projectionChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Revenue',
+                            data: revenueData,
+                            borderColor: 'rgb(34, 197, 94)',
+                            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: 'Gross Profit',
+                            data: profitData,
+                            borderColor: 'rgb(59, 130, 246)',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: 'Net Profit',
+                            data: netProfitData,
+                            borderColor: 'rgb(139, 92, 246)',
+                            backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                            tension: 0.3,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            ticks: {
+                                maxTicksLimit: 12
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + formatCurrency(context.raw);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Fetch data from API with the encoded scenario
+        async function fetchData() {
+            try {
+                // Use the full API URL with encoded scenario
+                const response = await fetch(\`\${API_BASE_URL}?scenario=\${ENCODED_SCENARIO}\`);
+                
+                if (!response.ok) {
+                    throw new Error('Failed to fetch data');
+                }
+                
+                const data = await response.json();
+                createChart(data);
+                
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                alert('Failed to fetch projection data. Please try again.');
+            }
+        }
+        
+        // Fetch data when page loads
+        document.addEventListener('DOMContentLoaded', fetchData);
+    <\/script>
+</body>
+</html>`;
+
+            return embedHtml;
+        }
+
+        // Modal functionality
+        document.getElementById('getEmbedCodeButton').addEventListener('click', () => {
+            const embedCode = generateEmbedCode();
+            document.getElementById('embedCodeTextarea').value = embedCode;
+            document.getElementById('embedModal').classList.remove('hidden');
+        });
+
+        document.getElementById('closeModalButton').addEventListener('click', () => {
+            document.getElementById('embedModal').classList.add('hidden');
+        });
+
+        // Copy to clipboard functionality
+        document.getElementById('copyEmbedCodeButton').addEventListener('click', () => {
+            const textarea = document.getElementById('embedCodeTextarea');
+            textarea.select();
+            document.execCommand('copy');
+            alert('Embed code copied to clipboard!');
+        });
+
+        // Download HTML functionality
+        document.getElementById('downloadEmbedCodeButton').addEventListener('click', () => {
+            const embedCode = document.getElementById('embedCodeTextarea').value;
+            const blob = new Blob([embedCode], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'startup-projection-chart.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+        
+        // Add event listener to update button
+        document.getElementById('updateButton').addEventListener('click', fetchData);
+        
+        // Fetch initial data when page loads
+        document.addEventListener('DOMContentLoaded', fetchData);
+    </script>
+</body>
+</html>

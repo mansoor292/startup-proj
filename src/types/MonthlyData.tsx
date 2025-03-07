@@ -17,6 +17,11 @@ interface MonthlyData {
   cash?: number;
   runway?: number;
   monthlyBurn?: number;
-}
+  
+  // S-curve specific metrics
+  penetrationRate?: number;
+  effectiveCAC?: number;
+  tamProximityFactor?: number;
+  }
 
 export default MonthlyData;
