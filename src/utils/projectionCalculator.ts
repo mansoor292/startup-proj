@@ -273,8 +273,8 @@ export function projectSCurveGrowth(params: {
     
     // CHECKPOINT 1: Apply S-curve dampening as we approach TAM
     // This creates the characteristic sigmoid shape
-    // Use a more aggressive dampening formula that kicks in more noticeably
-    const tamProximityFactor = 1 - Math.pow(penetrationRate * 10, 2);
+    // Use a more gradual dampening formula that approaches zero at 100% penetration
+    const tamProximityFactor = 1 - Math.pow(penetrationRate, 2);
     
     // CHECKPOINT 2: Different resistance at market penetration thresholds
     let marketPhaseFactor = 1;

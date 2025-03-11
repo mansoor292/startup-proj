@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
 import MonthlyData from '../types/MonthlyData';
 
@@ -8,7 +8,58 @@ interface BurnData extends MonthlyData {
   runway?: number;
   monthlyBurn?: number;
   burnMultiple?: number;
+  quarter?: string;
 }
+
+// Interface for quarterly data which only needs a subset of properties
+interface QuarterlyBurnData {
+  quarter: string;
+  burnMultiple: number;
+}
+
+// Function to transform monthly data into quarterly averages for burn multiple
+const calculateQuarterlyBurnData = (data: BurnData[]): QuarterlyBurnData[] => {
+  if (!data || data.length === 0) return [];
+  
+  const quarterMap: { [key: string]: BurnData[] } = {};
+  
+  // Group by quarters based on month number
+  data.forEach(month => {
+    // Using label format Y1M1, Y1M2, etc.
+    if (!month.label) return;
+    
+    // Extract year and month from label (format: Y1M1)
+    const match = month.label.match(/Y(\d+)M(\d+)/);
+    if (!match) return;
+    
+    const year = parseInt(match[1]);
+    const monthNum = parseInt(match[2]);
+    
+    // Determine quarter
+    let quarter = '';
+    if (monthNum <= 3) quarter = `Q1 Y${year}`;
+    else if (monthNum <= 6) quarter = `Q2 Y${year}`;
+    else if (monthNum <= 9) quarter = `Q3 Y${year}`;
+    else quarter = `Q4 Y${year}`;
+    
+    if (!quarterMap[quarter]) quarterMap[quarter] = [];
+    quarterMap[quarter].push(month);
+  });
+  
+  // Calculate averages for each quarter
+  return Object.entries(quarterMap).map(([quarter, months]) => {
+    // Calculate average burn multiple for the quarter
+    const validBurnMultiples = months.filter(m => m.burnMultiple !== undefined && isFinite(m.burnMultiple));
+    const avgBurnMultiple = validBurnMultiples.length > 0 
+      ? validBurnMultiples.reduce((sum, m) => sum + (m.burnMultiple || 0), 0) / validBurnMultiples.length 
+      : 0;
+    
+    return {
+      quarter,
+      burnMultiple: avgBurnMultiple
+    };
+  });
+};
 
 // Format currency values
 const formatCurrency = (value: number): string => {
@@ -47,8 +98,6 @@ interface BurnMetricsConciseProps {
 }
 
 const BurnMetricsConcise: React.FC<BurnMetricsConciseProps> = ({ data = [] }) => {
-  const [activeMetric, setActiveMetric] = useState('runway');
-  
   // If no data is provided, show a placeholder message
   if (!data || data.length === 0) {
     return (
@@ -64,6 +113,9 @@ const BurnMetricsConcise: React.FC<BurnMetricsConciseProps> = ({ data = [] }) =>
   const latestBurnMultiple = currentMonth?.burnMultiple || 0;
   const currentRunway = currentMonth?.runway || 0;
   const currentBurn = currentMonth?.monthlyBurn || 0;
+  
+  // Calculate quarterly data for burn multiple chart
+  const quarterlyBurnData: QuarterlyBurnData[] = calculateQuarterlyBurnData(data);
   
   return (
     <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg">
@@ -132,33 +184,83 @@ const BurnMetricsConcise: React.FC<BurnMetricsConciseProps> = ({ data = [] }) =>
         </div>
       </div>
       
-      {/* Chart toggle */}
-      <div className="flex mb-4 border-b">
-        <button
-          className={`px-4 py-2 font-medium text-sm ${activeMetric === 'runway' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-          onClick={() => setActiveMetric('runway')}
-        >
-          Cash & Runway
-        </button>
-        <button
-          className={`px-4 py-2 font-medium text-sm ${activeMetric === 'burn' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-          onClick={() => setActiveMetric('burn')}
-        >
-          Burn Multiple
-        </button>
+      {/* Burn Multiple Chart (Quarterly) - First */}
+      <div className="mb-4">
+        <h3 className="text-lg font-medium mb-2 text-gray-700">Quarterly Burn Multiple</h3>
+        <div className="h-64 sm:h-72">
+          <ResponsiveContainer width="100%" height="100%">
+            {quarterlyBurnData.length > 0 ? (
+              <BarChart
+                data={quarterlyBurnData}
+                margin={{ top: 10, right: 30, left: 20, bottom: 20 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                <XAxis 
+                  dataKey="quarter" 
+                  tick={{ fontSize: 12 }}
+                />
+                <YAxis 
+                  domain={[0, 5]}
+                  tickFormatter={(value) => `${value.toFixed(1)}x`}
+                  tick={{ fontSize: 12 }}
+                />
+                <Tooltip 
+                  formatter={(value: any, name: any) => {
+                    if (name === "Burn Multiple (Quarterly Avg)") return parseFloat(value).toFixed(1) + 'x';
+                    return value;
+                  }}
+                />
+                <Legend />
+                <Bar 
+                  dataKey="burnMultiple" 
+                  name="Burn Multiple (Quarterly Avg)" 
+                  fill="#8b5cf6" 
+                  maxBarSize={40}
+                />
+                <ReferenceLine 
+                  y={1} 
+                  stroke="#22c55e" 
+                  strokeDasharray="3 3"
+                  label={{ 
+                    value: 'Excellent', 
+                    position: 'right',
+                    fill: '#22c55e',
+                    fontSize: 10
+                  }}
+                />
+                <ReferenceLine 
+                  y={2} 
+                  stroke="#facc15" 
+                  strokeDasharray="3 3"
+                  label={{ 
+                    value: 'Good', 
+                    position: 'right',
+                    fill: '#facc15',
+                    fontSize: 10
+                  }}
+                />
+              </BarChart>
+            ) : (
+              <div className="flex items-center justify-center h-full bg-gray-50 rounded-lg">
+                <p className="text-gray-500">No quarterly burn data available</p>
+              </div>
+            )}
+          </ResponsiveContainer>
+        </div>
       </div>
       
-      {/* Chart */}
-      <div className="h-64 sm:h-72">
-        <ResponsiveContainer width="100%" height="100%">
-          {activeMetric === 'runway' ? (
+      {/* Cash & Runway Chart - Second */}
+      <div className="mt-8">
+        <h3 className="text-lg font-medium mb-2 text-gray-700">Cash & Runway</h3>
+        <div className="h-64 sm:h-72">
+          <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={data}
               margin={{ top: 10, right: 30, left: 20, bottom: 20 }}
             >
               <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
               <XAxis 
-                dataKey="monthLabel" 
+                dataKey="label" 
                 tick={{ fontSize: 12 }}
                 interval={data.length > 24 ? 2 : 1}
               />
@@ -166,6 +268,7 @@ const BurnMetricsConcise: React.FC<BurnMetricsConciseProps> = ({ data = [] }) =>
                 yAxisId="left"
                 tickFormatter={(value) => formatCurrency(value)}
                 tick={{ fontSize: 12 }}
+                label={{ value: 'Cash Balance', angle: -90, position: 'insideLeft', offset: -5, style: { textAnchor: 'middle', fill: '#3b82f6', fontSize: 12 } }}
               />
               <YAxis 
                 yAxisId="right"
@@ -173,6 +276,7 @@ const BurnMetricsConcise: React.FC<BurnMetricsConciseProps> = ({ data = [] }) =>
                 domain={[0, 'dataMax + 6']}
                 tickFormatter={(value) => `${value}m`}
                 tick={{ fontSize: 12 }}
+                label={{ value: 'Runway (months)', angle: 90, position: 'insideRight', offset: 5, style: { textAnchor: 'middle', fill: '#f59e0b', fontSize: 12 } }}
               />
               <Tooltip 
                 formatter={(value: any, name: any) => {
@@ -213,60 +317,8 @@ const BurnMetricsConcise: React.FC<BurnMetricsConciseProps> = ({ data = [] }) =>
                 }}
               />
             </LineChart>
-          ) : (
-            <BarChart
-              data={data}
-              margin={{ top: 10, right: 30, left: 20, bottom: 20 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-              <XAxis 
-                dataKey="monthLabel" 
-                tick={{ fontSize: 12 }}
-                interval={data.length > 24 ? 2 : 1}
-              />
-              <YAxis 
-                domain={[0, 5]}
-                tickFormatter={(value) => `${value}x`}
-                tick={{ fontSize: 12 }}
-              />
-              <Tooltip 
-                formatter={(value: any, name: any) => {
-                  if (name === "Burn Multiple") return formatBurnMultiple(Number(value));
-                  return value;
-                }}
-              />
-              <Legend />
-              <Bar 
-                dataKey="burnMultiple" 
-                name="Burn Multiple" 
-                fill="#8b5cf6" 
-                maxBarSize={40}
-              />
-              <ReferenceLine 
-                y={1} 
-                stroke="#22c55e" 
-                strokeDasharray="3 3"
-                label={{ 
-                  value: 'Excellent', 
-                  position: 'right',
-                  fill: '#22c55e',
-                  fontSize: 10
-                }}
-              />
-              <ReferenceLine 
-                y={2} 
-                stroke="#facc15" 
-                strokeDasharray="3 3"
-                label={{ 
-                  value: 'Good', 
-                  position: 'right',
-                  fill: '#facc15',
-                  fontSize: 10
-                }}
-              />
-            </BarChart>
-          )}
-        </ResponsiveContainer>
+          </ResponsiveContainer>
+        </div>
       </div>
       
       {/* Quick explanation */}

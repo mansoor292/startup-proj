@@ -71,28 +71,30 @@ const AdvancedModelToggle: React.FC<AdvancedModelToggleProps> = ({
             <label className="block text-sm font-medium mb-2 text-slate-700">Early Adopter Ceiling</label>
             <div className="relative">
               <input
-                type="text"
+                type="number"
                 name="earlyAdopterCeiling"
-                value={getFormattedValue('earlyAdopterCeiling')}
+                value={inputs.earlyAdopterCeiling}
                 onChange={handleInputChange}
+                step="any"
                 className="w-full p-3 border border-slate-200 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all"
               />
             </div>
-            <p className="text-xs text-slate-500 mt-1">% of TAM representing early adopters (0.16 = 16%)</p>
+            <p className="text-xs text-slate-500 mt-1">% of TAM representing early adopters (enter 0.16 for 16%)</p>
           </div>
           
           <div>
             <label className="block text-sm font-medium mb-2 text-slate-700">Main Market Resistance</label>
             <div className="relative">
               <input
-                type="text"
+                type="number"
                 name="mainMarketResistance"
-                value={getFormattedValue('mainMarketResistance')}
+                value={inputs.mainMarketResistance}
                 onChange={handleInputChange}
+                step="any"
                 className="w-full p-3 border border-slate-200 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all"
               />
             </div>
-            <p className="text-xs text-slate-500 mt-1">Difficulty factor when entering main market (1.5 = 50% harder)</p>
+            <p className="text-xs text-slate-500 mt-1">Difficulty factor when entering main market (enter 1.5 for 50% harder)</p>
           </div>
           
           <div>
@@ -118,28 +120,30 @@ const AdvancedModelToggle: React.FC<AdvancedModelToggleProps> = ({
             <label className="block text-sm font-medium mb-2 text-slate-700">Competitive Response Impact</label>
             <div className="relative">
               <input
-                type="text"
+                type="number"
                 name="competitiveResponseImpact"
-                value={getFormattedValue('competitiveResponseImpact')}
+                value={inputs.competitiveResponseImpact}
                 onChange={handleInputChange}
+                step="any"
                 className="w-full p-3 border border-slate-200 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all"
               />
             </div>
-            <p className="text-xs text-slate-500 mt-1">How much competitors increase your CAC (1.4 = 40% increase)</p>
+            <p className="text-xs text-slate-500 mt-1">How much competitors increase your CAC (enter 1.4 for 40% increase)</p>
           </div>
           
           <div>
             <label className="block text-sm font-medium mb-2 text-slate-700">Channel Saturation Rate</label>
             <div className="relative">
               <input
-                type="text"
+                type="number"
                 name="channelSaturationRate"
-                value={getFormattedValue('channelSaturationRate')}
+                value={inputs.channelSaturationRate}
                 onChange={handleInputChange}
+                step="any"
                 className="w-full p-3 border border-slate-200 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all"
               />
             </div>
-            <p className="text-xs text-slate-500 mt-1">Rate at which marketing efficiency decreases (0.01 = 1% per month)</p>
+            <p className="text-xs text-slate-500 mt-1">Rate at which marketing efficiency decreases (enter 0.01 for 1% per month)</p>
           </div>
         </div>
       )}
